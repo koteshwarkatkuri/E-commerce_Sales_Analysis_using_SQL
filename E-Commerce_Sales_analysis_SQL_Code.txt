@@ -1,0 +1,103 @@
+1.Total Revenue Generated:
+
+SELECT SUM(total_price) AS total_revenue
+FROM fact_orders;
+
+2.Total Number of Orders Placed:
+
+SELECT COUNT(order_id) AS total_orders
+FROM fact_orders;
+
+3. Number of Orders per Customer
+
+SELECT 
+    c.customer_name,
+    COUNT(f.order_id) AS number_of_orders
+FROM fact_orders f
+JOIN dim_customers c ON f.customer_id = c.customer_id
+GROUP BY c.customer_name
+ORDER BY number_of_orders DESC;
+
+3. Sales Trend Monthly
+
+SELECT 
+    d.year,
+    d.month,
+    SUM(f.total_price) AS monthly_revenue
+FROM fact_orders f
+JOIN dim_dates d ON f.order_date = d.date
+GROUP BY d.year, d.month
+ORDER BY d.year, d.month;
+
+5. Payment Method Distribution
+
+SELECT 
+    payment_method,
+    COUNT(order_id) AS count,
+    ROUND(100.0 * COUNT(order_id) / (SELECT COUNT(*) FROM fact_orders), 2) AS percentage
+FROM fact_orders
+GROUP BY payment_method;
+
+6. Top Countries by Revenue
+
+SELECT 
+    c.country,
+    SUM(f.total_price) AS revenue
+FROM fact_orders f
+JOIN dim_customers c ON f.customer_id = c.customer_id
+GROUP BY c.country
+ORDER BY revenue DESC;
+
+7. Website Traffic Trend (Daily Page Views)
+
+SELECT 
+    visit_date,
+    SUM(page_views) AS total_page_views
+FROM dim_traffic
+GROUP BY visit_date
+ORDER BY visit_date;
+
+8. Bounce Rate Trend
+
+SELECT 
+    visit_date,
+    ROUND(100.0 * SUM(CASE WHEN bounce = 'Yes' THEN 1 ELSE 0 END) / COUNT(*), 2) AS bounce_rate_percent
+FROM dim_traffic
+GROUP BY visit_date
+ORDER BY visit_date;
+
+9. Customers with Abandoned Carts
+
+SELECT 
+    c.customer_name,
+    ca.cart_id,
+    ca.product_id
+FROM cart_activity ca
+JOIN dim_customers c ON ca.customer_id = c.customer_id
+WHERE ca.purchased = 'No';
+
+10. Rolling 3-Month Revenue
+
+SELECT 
+    d.year,
+    d.month,
+    SUM(f.total_price) AS monthly_revenue,
+    SUM(SUM(f.total_price)) OVER (
+        ORDER BY d.year, d.month 
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS rolling_3_month_revenue
+FROM fact_orders f
+JOIN dim_dates d ON f.order_date = d.date
+GROUP BY d.year, d.month
+ORDER BY d.year, d.month;
+
+11. Revenue by Country
+
+SELECT 
+    c.country,
+    SUM(f.total_price) AS revenue
+FROM fact_orders f
+JOIN dim_customers c ON f.customer_id = c.customer_id
+GROUP BY c.country
+ORDER BY revenue DESC;
+
